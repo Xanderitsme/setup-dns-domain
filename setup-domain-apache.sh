@@ -3,7 +3,7 @@
 # Solicitar información al usuario
 
 while [ -z "$DOMAIN" ]; do
-read -p "Introduce el dominio (ejemplo: mysite.com): " DOMINIO
+read -p "Introduce el dominio (ejemplo: mysite.com): " DOMAIN
 if [ -z "$DOMAIN" ]; then
 echo "El dominio no puede estar vacío. Por favor, introduce un valor."
 fi
