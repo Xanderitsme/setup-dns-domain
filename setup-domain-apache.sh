@@ -43,17 +43,17 @@ EOF
 CONFIG_FILE="/etc/apache2/sites-available/$DOMINIO.conf"
 echo "Creando el archivo de configuración para el sitio $CONFIG_FILE"
 cat <<EOF > "$CONFIG_FILE"
-<VirtualHost \*:80>
-ServerName $SUBDOMINIO.$DOMINIO
-DirectoryIndex index.html index.php
-DocumentRoot /var/www/$DOMINIO
-    ErrorLog \${APACHE_LOG_DIR}/$DOMINIO-error.log
-CustomLog \${APACHE_LOG_DIR}/$DOMINIO-access.log combined
-    <Directory /var/www/$DOMINIO>
-Options FollowSymLinks
-AllowOverride All
-Require all granted
-</Directory>
+<VirtualHost *:80>
+  ServerName unamad.joomla.com
+  DirectoryIndex index.html index.php
+  DocumentRoot /var/www/html/Joomla
+  ErrorLog /joomla-error.log
+  CustomLog /joomla-access.log combined
+  <Directory /var/www/html/Joomla>
+    Options FollowSymLinks
+    AllowOverride All
+    Require all granted
+  </Directory>
 </VirtualHost>
 EOF
 
