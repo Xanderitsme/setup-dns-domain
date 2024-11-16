@@ -62,6 +62,20 @@ Finalmente, recarga Apache para que los cambios surtan efecto.
 sudo systemctl reload apache2
 ```
 
+## 6. Agregar el nuevo dominio al archivo hosts (opcional)
+
+Acceder al archivo hosts
+
+```bash
+sudo nano /etc/hosts
+```
+
+Agrega el siguiente contenido en el archivo. Asegúrate de reemplazar `[ip]` con tu ip y `[domain]` con tu dominio
+
+```bash
+[ip] [domain]
+```
+
 ---
 
 ¡Listo! Ahora tu nuevo dominio debería estar configurado y funcionando con Apache2. Puedes probar accediendo a tu dominio o subdominio a través de un navegador para asegurarte de que el servidor esté sirviendo el archivo `index.php` correctamente.

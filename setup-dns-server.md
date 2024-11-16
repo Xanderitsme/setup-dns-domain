@@ -57,19 +57,28 @@ Edita el archivo `named.conf.local` para añadir las configuraciones de las zona
 sudo nano /etc/bind/named.conf.local
 ```
 
-Pega el siguiente contenido, reemplazando `[subdomain]` con el subdominio que desees (por ejemplo, `mysite.com`), y `[network]` con la parte de tu red que obtienes de `ip r` (por ejemplo, `192.168.1`):
+Pega el siguiente contenido, reemplazando `[domain]` con el dominio que desees (por ejemplo, `mysite.com`), y `[network]` con el segmento de tu red que obtienes de `ip r` (por ejemplo, `192.168.1`):
+
+> [!NOTE]
+> `[network]` se refiere a los 3 primeros octetos de la ip que obtienes al ejecutar `ip r`, es decir si al ejecutar dicho comando obtienes `192.168.1.0/24` entonces tu segmento de red (`[network]`) será `192.168.1`
 
 ```bash
-zone "[subdomain]" IN {
+zone "[domain]" IN {
     // Forward zone file
     type master;
-    file "/etc/bind/zones/[subdomain]";
+    file "/etc/bind/zones/[domain]";
 };
+# Agregar más configuraciones similares en caso de tener varios domnios
+# zone "[domain2]" IN {
+#     // Forward zone file
+#     type master;
+#     file "/etc/bind/zones/[domain]";
+# };
 
 zone "[network].in-addr.arpa" IN {
     // Reverse zone file
     type master;
-    file "/etc/bind/zones/[subdomain].rev";
+    file "/etc/bind/zones/[domain].rev";
 };
 ```
 
@@ -83,77 +92,60 @@ sudo mkdir /etc/bind/zones
 
 ## 5. Configurar la zona directa (Forward Zone)
 
-Ahora, crea el archivo de zona directa para el dominio. Abre el archivo de zona con el siguiente comando (reemplaza `[subdomain]` por tu subdominio):
+Ahora, crea el archivo de zona directa para el dominio. Abre el archivo de zona con el siguiente comando (reemplaza `[domain]` por tu subdominio):
 
 ```bash
-sudo nano /etc/bind/zones/[subdomain]
+sudo nano /etc/bind/zones/[domain]
 ```
 
-Pega el siguiente contenido, reemplazando `[domain]` por tu dominio, `[subdomain]` por tu subdominio y `[ip]` por la dirección IP de tu servidor (puedes obtenerla con el comando `hostname -I`):
+Pega el siguiente contenido, reemplazando `[subdomain]` por tu dominio, `[domain]` por tu subdominio y `[ip]` por la dirección IP de tu servidor (puedes obtenerla con el comando `hostname -I`):
 
 ```bash
 $TTL    604800
-; SOA record with MNAME and RNAME updated
-@       IN      SOA     [subdomain]. root.[subdomain]. (
-                              3         ; Serial Note: increment after each change
-                         604800         ; Refresh
-                          86400         ; Retry
-                        2419200         ; Expire
-                         604800 )       ; Negative Cache TTL
-
-; Name server record
-@       IN      NS      [domain].[subdomain].
-
-; A record for name server
-[domain]      IN      A       [ip]
-
-; A record for client
-client1      IN      A       [ip]
+@       IN      SOA     [domain]. root.[domain]. (
+                          3         ; Serial
+                     604800         ; Refresh
+                      86400         ; Retry
+                    2419200         ; Expire
+                     604800 )       ; Negative Cache TTL
+@       IN      NS      [subdomain].[domain].
+[subdomain]      IN      A       [ip]
 ```
 
 > **Opcional**: Puedes verificar la configuración del archivo de zona con el siguiente comando:
 
 ```bash
-# named-checkzone [subdomain] /etc/bind/zones/[subdomain]
+# named-checkzone [domain] /etc/bind/zones/[domain]
 ```
+
+> [!NOTE]
+> Repetir este paso una vez por cada dominio que se desee registrar, es decir si tienes dos dominios repetiras este paso dos veces
 
 ## 6. Configurar la zona inversa (Reverse Zone)
 
 Ahora, configura el archivo de zona inversa para realizar las búsquedas inversas (PTR). Abre el archivo con el siguiente comando:
 
 ```bash
-sudo nano /etc/bind/zones/[subdomain].rev
+sudo nano /etc/bind/zones/[network].rev
 ```
 
-Pega el siguiente contenido, reemplazando `[domain]` con tu dominio, `[subdomain]` con tu subdominio, y `[ip]` con la dirección IP de tu servidor:
+Pega el siguiente contenido, reemplazando `[network]` con tu segmento de red y `[ip]` con la dirección IP de tu servidor:
 
 ```bash
 $TTL    604800
-; SOA record with MNAME and RNAME updated
-@       IN      SOA     [subdomain]. root.[subdomain]. (
-                              2         ; Serial Note: increment after each change
-                         604800         ; Refresh
-                          86400         ; Retry
-                        2419200         ; Expire
-                         604800 )       ; Negative Cache TTL
-
-; Name server record
-@       IN      NS      [domain].[subdomain].
-
-; A record for name server
-[domain]      IN      A       [ip]
-
-; PTR record for name server
-2       IN      PTR     [domain].[subdomain]
-
-; PTR record for client
-3       IN      PTR     client1.[subdomain]
+@       IN      SOA     [ip]. root.[network]. (
+                          2         ; Serial
+                     604800         ; Refresh
+                      86400         ; Retry
+                    2419200         ; Expire
+                     604800 )       ; Negative Cache TTL
+@       IN      NS      www.[network].in-addr.arpa.
 ```
 
 > **Opcional**: Verifica la configuración de la zona inversa con el siguiente comando:
 
 ```bash
-# named-checkzone [subdomain] /etc/bind/zones/[subdomain].rev
+# named-checkzone [domain] /etc/bind/zones/[domain].rev
 ```
 
 ## 7. Reiniciar el servicio BIND 9
