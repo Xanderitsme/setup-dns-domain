@@ -1,12 +1,12 @@
 #!/bin/bash
 
+# Cargar el archivo de configuración
+source ./dns_config
+
 # Función para comprobar si un paquete está instalado
 is_package_installed() {
     dpkg -l | grep -q "^ii  $1 "  # Busca el paquete en la lista de paquetes instalados
 }
-
-# Cargar el archivo de configuración
-source ./dns_config
 
 # Función para obtener la IP y red actuales
 get_current_ip() {
