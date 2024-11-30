@@ -2,6 +2,9 @@ GATEWAY="192.168.1.0/24"
 NETWORK="192.168.1"
 SUBDOMAIN="ns1"
 DOMAINS=(
-"domain1.com"
-"domain2.com"
+  "192.168.1.2-www.domain1.com"
+  "192.168.1.2-domain2.com"
+  "www.domain3.com"
+  "domain4.com"
+  "domain5.com"
 )

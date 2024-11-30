@@ -17,7 +17,6 @@ get_current_ip() {
 SERVER_IP=$(get_current_ip)
 
 # Paso 1: Verificar e instalar los paquetes que faltan
-# Comprobar si los paquetes necesarios están instalados
 echo "Verificando si los paquetes necesarios están instalados..."
 
 # Lista de paquetes necesarios
@@ -60,7 +59,16 @@ echo "Configurando named.conf.local..."
 ZONE_INVERTIDA_AGREGADA=false
 
 # Añadir zonas directas para cada dominio
-for DOMAIN in "${DOMAINS[@]}"; do
+for DOMAIN_ENTRY in "${DOMAINS[@]}"; do
+    # Verificar si la entrada tiene una IP
+    if [[ $DOMAIN_ENTRY =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)-(.+)$ ]]; then
+        IP="${BASH_REMATCH[1]}"
+        DOMAIN="${BASH_REMATCH[2]}"
+    else
+        IP="$SERVER_IP"  # Usar IP del servidor si no se especifica
+        DOMAIN="$DOMAIN_ENTRY"
+    fi
+    
     # Agregar la zona directa para cada dominio
     cat <<EOL >> /etc/bind/named.conf.local
 zone "$DOMAIN" IN {
@@ -87,7 +95,16 @@ echo "Creando directorio para archivos de zona..."
 mkdir -p /etc/bind/zones
 
 # Paso 5: Crear archivos de zona directa para cada dominio
-for DOMAIN in "${DOMAINS[@]}"; do
+for DOMAIN_ENTRY in "${DOMAINS[@]}"; do
+    # Verificar si la entrada tiene una IP
+    if [[ $DOMAIN_ENTRY =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)-(.+)$ ]]; then
+        IP="${BASH_REMATCH[1]}"
+        DOMAIN="${BASH_REMATCH[2]}"
+    else
+        IP="$SERVER_IP"  # Usar IP del servidor si no se especifica
+        DOMAIN="$DOMAIN_ENTRY"
+    fi
+    
     echo "Creando archivo de zona directa para $DOMAIN..."
     > /etc/bind/zones/$DOMAIN  # Vaciar el archivo de zona antes de agregar nuevo contenido
     cat <<EOL > /etc/bind/zones/$DOMAIN
@@ -99,7 +116,7 @@ for DOMAIN in "${DOMAINS[@]}"; do
                     2419200         ; Expire
                      604800 )       ; Negative Cache TTL
 @       IN      NS      $SUBDOMAIN.$DOMAIN.
-$SUBDOMAIN      IN      A       $SERVER_IP
+$SUBDOMAIN      IN      A       $IP
 EOL
 done
 
@@ -120,9 +137,18 @@ cat <<EOL > /etc/bind/zones/$NETWORK.rev
 EOL
 
 # Agregar las entradas PTR al archivo de zona inversa
-for DOMAIN in "${DOMAINS[@]}"; do
+for DOMAIN_ENTRY in "${DOMAINS[@]}"; do
+    # Verificar si la entrada tiene una IP
+    if [[ $DOMAIN_ENTRY =~ ^([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)-(.+)$ ]]; then
+        IP="${BASH_REMATCH[1]}"
+        DOMAIN="${BASH_REMATCH[2]}"
+    else
+        IP="$SERVER_IP"  # Usar IP del servidor si no se especifica
+        DOMAIN="$DOMAIN_ENTRY"
+    fi
+    
     # Extraer el último octeto de la IP para usar en la zona inversa
-    IP_LAST_OCTET=$(echo $SERVER_IP | cut -d '.' -f4)
+    IP_LAST_OCTET=$(echo $IP | cut -d '.' -f4)
 
     # Agregar la entrada PTR para la IP y dominio
     echo "$IP_LAST_OCTET      IN      PTR     $DOMAIN." >> /etc/bind/zones/$NETWORK.rev
