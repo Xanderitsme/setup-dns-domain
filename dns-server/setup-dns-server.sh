@@ -47,13 +47,21 @@ options {
         localhost;
         LAN;
     };
-    forwarders{
+    forwarders {
         8.8.8.8;
         1.1.1.1;
     };
+    listen-on {
+        any;
+    };
+    dnssec-validation no;
     recursion yes;
 };
 EOL
+
+# update default options
+DEFAULT_NAMED_PATH="/etc/default/named"
+sed -i 's/^OPTIONS.*/OPTIONS="-u bind -4"/' $DEFAULT_NAMED_PATH
 
 # Paso 3: Vaciar y configurar named.conf.local
 echo "Configurando named.conf.local..."
@@ -113,14 +121,15 @@ for DOMAIN_ENTRY in "${DOMAINS[@]}"; do
     > /etc/bind/zones/$DOMAIN  # Vaciar el archivo de zona antes de agregar nuevo contenido
     cat <<EOL > /etc/bind/zones/$DOMAIN
 \$TTL    604800
-@       IN      SOA     $DOMAIN. root.$DOMAIN. (
+@       IN      SOA     $SUBDOMAIN.$DOMAIN. root.$DOMAIN. (
                           3         ; Serial
                      604800         ; Refresh
                       86400         ; Retry
                     2419200         ; Expire
                      604800 )       ; Negative Cache TTL
-@       IN      NS      $SUBDOMAIN.$DOMAIN.
+                IN      NS      $SUBDOMAIN.$DOMAIN.
 $SUBDOMAIN      IN      A       $IP
+server          IN      CNAME   $SUBDOMAIN
 EOL
 done
 
@@ -131,13 +140,13 @@ echo "Creando archivo de zona inversa..."
 # Agregar la parte inicial del archivo de zona inversa (SOA y NS)
 cat <<EOL > /etc/bind/zones/$NETWORK.rev
 \$TTL    604800
-@       IN      SOA     $SERVER_IP. root.$NETWORK. (
-                          2         ; Serial
+@       IN      SOA     $SUBDOMAIN.$DOMAIN. root.$DOMAIN. (
+                          3         ; Serial
                      604800         ; Refresh
                       86400         ; Retry
                     2419200         ; Expire
                      604800 )       ; Negative Cache TTL
-@       IN      NS      www.$NETWORK.in-addr.arpa.
+                IN      NS      $SUBDOMAIN.$DOMAIN.
 EOL
 
 # Agregar las entradas PTR al archivo de zona inversa
@@ -155,11 +164,15 @@ for DOMAIN_ENTRY in "${DOMAINS[@]}"; do
     IP_LAST_OCTET=$(echo $IP | cut -d '.' -f4)
 
     # Agregar la entrada PTR para la IP y dominio
-    echo "$IP_LAST_OCTET      IN      PTR     $DOMAIN." >> /etc/bind/zones/$NETWORK.rev
+    echo "$IP_LAST_OCTET      IN      PTR     $SUBDOMAIN.$DOMAIN." >> /etc/bind/zones/$NETWORK.rev
 done
 
 # Paso 7: Reiniciar BIND 9
 echo "Reiniciando BIND 9..."
 systemctl restart bind9
+
+# Paso 8: Agregar reglas al firewall
+echo "Agregano reglas a ufw"
+ufw allow bind9
 
 echo "Configuración completada."
