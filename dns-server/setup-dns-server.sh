@@ -128,8 +128,13 @@ for DOMAIN_ENTRY in "${DOMAINS[@]}"; do
                     2419200         ; Expire
                      604800 )       ; Negative Cache TTL
                 IN      NS      $SUBDOMAIN.$DOMAIN.
-$SUBDOMAIN      IN      A       $IP
+$DOMAIN.        IN      MX      10 correo.$DOMAIN.
+
+$SUBDOMAIN              A       $IP
+
 server          IN      CNAME   $SUBDOMAIN
+pop3            IN      CNAME   $SUBDOMAIN
+smtp            IN      CNAME   $SUBDOMAIN
 EOL
 done
 
