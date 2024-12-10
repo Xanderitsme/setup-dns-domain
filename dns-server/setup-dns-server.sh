@@ -20,7 +20,11 @@ SERVER_IP=$(get_current_ip)
 echo "Verificando si los paquetes necesarios están instalados..."
 
 # Lista de paquetes necesarios
-PACKAGES=("bind9" "bind9utils" "bind9-doc")
+PACKAGES=(
+    "bind9" 
+    "bind9utils" 
+    # "bind9-doc"
+)
 
 for PACKAGE in "${PACKAGES[@]}"; do
     if ! is_package_installed "$PACKAGE"; then
