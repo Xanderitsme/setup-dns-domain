@@ -1,125 +1,117 @@
-# Guía para Configurar un Servidor de Correos
+# Guía para Configurar un Servidor de Correo
 
-## 1. Comprobar hostname y actualizarlo en caso de ser necesario
+Sigue estos pasos para configurar un servidor de correo funcional utilizando Postfix y Dovecot.
 
-```bash
-sudo hostname
-```
+---
 
-Reemplazar `[domain]` por el nombre de tu dominio
-```bash
-sudo hostnamectl set-hostname [domain]
-```
+## Paso 1: Configurar el Nombre del Host (hostname)
 
-## 2. Instalar postfix
+1. Verifica el hostname actual:
+   ```bash
+   sudo hostname
+   ```
+2. Cambia el hostname al nombre de tu dominio:
+   ```bash
+   sudo hostnamectl set-hostname [tu-dominio]
+   echo "[tu-dominio]" | sudo tee /etc/mailname
+   ```
 
-```bash
-sudo apt isntall postfix
-```
+---
 
-Realizar la configuración inicial
-- Sitio de internet
-- [dominio]
+## Paso 2: Instalar y Configurar Postfix
 
-> **Opcional**: Puedes verificar que el dominio sea el correcto con este comando
+1. Instala Postfix:
+   ```bash
+   sudo apt install -y postfix
+   ```
+2. Configura Postfix:
 
-```bash
-# cat /etc/mailname
-```
+   - Tipo de servidor: **Sitio de internet**
+   - Nombre del dominio: `[tu-dominio]`
 
-> **Opcional**: Si deseas cambiar el dominio puedes hacerlo con este comando
-```bash
-# sudo nano /etc/mailname
-# sudo systemctl restart postfix
-```
+3. Verifica la configuración:
 
-## 3. Agregar usuarios
+   ```bash
+   cat /etc/mailname
+   ```
 
-Agregar al menos 2 usuarios:
-- liz
-- alice
+   Si necesitas cambiar el dominio, edita `/etc/mailname` y reinicia Postfix:
 
-Puedes agregar usuarios con el siguiente comando, solo reemplaza [username] con el nombre del usuario
+   ```bash
+   sudo nano /etc/mailname
+   ```
 
-```bash
-sudo adduser [username]
-```
+   ```bash
+   sudo systemctl restart postfix
+   ```
 
-## 4. Instalar mailx
+4. Configura el buzón y redes locales:
+   ```bash
+   sudo nano /etc/postfix/main.cf
+   ```
+   Asegúrate de incluir estas líneas (sustituye `[red-local]` por la IP de tu red):
+   ```
+   mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 [red-local]
+   home_mailbox = Maildir/
+   mailbox_command =
+   ```
 
-bsd-mailx es un cliente de correo electrónico a través de la línea de comandos
+---
 
-```bash
-sudo apt install bsd-mailx
-```
+## Paso 3: Crear Usuarios
 
-## 5. Instalar dovecot pop3d
-
-Ejecuta el siguiente comando
-
-```bash
-sudo apt install dovecot-pop3d
-```
-
-## 6. Configurar servidor pop en la red local
-
-```bash
-sudo nano /etc/postfix/main.cf
-```
-
-realizar los siguientes cambios: (reemplaza `[network]` con la ip de la red local, puedes utilizar el comando `ip r`)
+Crea los usuarios necesarios (ejemplo: `liz` y `alice`):
 
 ```bash
-mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 [network]
-home_mailbox = Maildir/
-mailbox_command =
+sudo adduser liz
+sudo adduser alice
 ```
 
-## 7. Configurar la autenticación de dovecot
+---
 
-Abrir el siguiente archivo
+## Paso 4: Instalar un Cliente de Correo
+
+Instala `bsd-mailx`, un cliente de correo basado en línea de comandos:
 
 ```bash
-sudo nano /etc/dovecot/conf.d/10-auth.conf
+sudo apt install -y bsd-mailx
 ```
 
-reemplazar la siguiente linea:
-```bash
-disable_plaintext_auth = no
-```
+---
 
-cerrar el archivo
+## Paso 5: Instalar y Configurar Dovecot
 
+1. Instala Dovecot con soporte POP3:
 
-Abrir el siguiente archivo
+   ```bash
+   sudo apt install -y dovecot-pop3d
+   ```
 
-```bash
-sudo nano /etc/dovecot/conf.d/10-mail.conf
-```
+2. Configura la autenticación:
 
-Comentar esta linea:
-```bash
-# mail_location = mbox:~/mail:INBOX=/var/mail/%u
-```
+   - Edita el archivo `/etc/dovecot/conf.d/10-auth.conf` y establece:
+     ```
+     disable_plaintext_auth = no
+     ```
 
-Descomentar esta linea:
-```bash
-mail_location = maildir:~/Maildir
-```
+3. Configura el almacenamiento de correos:
+   - Edita el archivo `/etc/dovecot/conf.d/10-mail.conf`:
+     - Comenta:
+       ```
+       # mail_location = mbox:~/mail:INBOX=/var/mail/%u
+       ```
+     - Descomenta o añade:
+       ```
+       mail_location = maildir:~/Maildir
+       ```
 
-## 7. Reiniciar postfix
+---
 
-Reinicia el servicio de postfix para aplicar los cambios de configuración:
+## Paso 6: Reiniciar Servicios
+
+Reinicia los servicios para aplicar los cambios:
 
 ```bash
 sudo systemctl restart postfix
-```
-
-## 7. Reiniciar dovecot
-
-Reinicia el servicio de dovecot para aplicar los cambios de configuración:
-
-```bash
 sudo systemctl restart dovecot
 ```
-
