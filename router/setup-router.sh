@@ -15,7 +15,7 @@ fi
 NETPLAN_FILE="$1"
 
 # Verificar si existe el archivo de configuración externo
-CONFIG_FILE="router_config"
+CONFIG_FILE="router.conf"
 if [ ! -f "$CONFIG_FILE" ]; then
   echo "Archivo de configuración '$CONFIG_FILE' no encontrado."
   exit 1
