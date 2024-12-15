@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# Cargar el archivo de configuración
-source ./dns_config
+# Verificar si existe el archivo de configuración externo
+CONFIG_FILE="dns.conf"
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "Archivo de configuración '$CONFIG_FILE' no encontrado."
+  exit 1
+fi
 
 # Función para comprobar si un paquete está instalado
 is_package_installed() {
