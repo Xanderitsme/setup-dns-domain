@@ -55,5 +55,8 @@ sed -i "s/^#\?mail_location = maildir.*$/mail_location = maildir:~\/Maildir/" /e
 systemctl restart dovecot
 echo "Dovecot configurado y reiniciado."
 
+# Instalar mysql-server y dovecot-imapd
+apt install -y mysql-server dovecot-imapd
+
 # Finalización
 echo "\nServidor de correo configurado exitosamente."

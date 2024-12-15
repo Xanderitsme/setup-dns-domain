@@ -135,6 +135,7 @@ $SUBDOMAIN              A       $IP
 server          IN      CNAME   $SUBDOMAIN
 pop3            IN      CNAME   $SUBDOMAIN
 smtp            IN      CNAME   $SUBDOMAIN
+correo            IN      CNAME   $SUBDOMAIN
 EOL
 done
 
