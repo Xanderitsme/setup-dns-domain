@@ -28,9 +28,10 @@ Sigue estos pasos para configurar un equipo Ubuntu como un router.
          dhcp4: true
        [lan-interface]:
          addresses: [[lan-network]]
+         # gateway4: [ip]
          nameservers:
            addresses: [[dns-server1], [dns-server2]]
-     renderer: networkd
+     renderer: NetworkManager
    ```
 
    - `[wan-interface]`: Interfaz conectada a la red WAN (ej. `enp0s3`).
