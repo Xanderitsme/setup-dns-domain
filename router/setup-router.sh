@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Función para comprobar si un paquete está instalado
+is_package_installed() {
+    dpkg -l | grep -q "^ii  $1 "  # Busca el paquete en la lista de paquetes instalados
+}
+
 # Comprobar si se ejecuta como root
 if [ "$EUID" -ne 0 ]; then
   echo "Por favor, ejecuta este script como root."
@@ -53,9 +58,19 @@ echo "Configurando reglas de iptables..."
 iptables -P FORWARD ACCEPT
 iptables -t nat -A POSTROUTING -o $WAN_INTERFACE -j MASQUERADE
 
-# Instalar iptables-persistent para guardar configuración
-echo "Instalando iptables-persistent..."
-apt update && apt install -y iptables-persistent
+# Lista de paquetes necesarios
+PACKAGES=(
+    "iptables-persistent" 
+)
+
+for PACKAGE in "${PACKAGES[@]}"; do
+    if ! is_package_installed "$PACKAGE"; then
+        echo "$PACKAGE no está instalado. Instalando..."
+        apt install -y "$PACKAGE"
+    else
+        echo "$PACKAGE ya está instalado."
+    fi
+done
 
 # Guardar reglas de iptables
 netfilter-persistent save

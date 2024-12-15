@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Función para comprobar si un paquete está instalado
+is_package_installed() {
+    dpkg -l | grep -q "^ii  $1 "  # Busca el paquete en la lista de paquetes instalados
+}
+
 # Verificar si el script se ejecuta como root
 if [[ $EUID -ne 0 ]]; then
    echo "Este script debe ejecutarse como root" 
@@ -12,8 +17,13 @@ hostnamectl set-hostname "$domain"
 echo "$domain" > /etc/mailname
 
 # Paso 2: Instalar y Configurar Postfix
-apt update
-apt install -y postfix
+# apt install -y postfix
+if ! is_package_installed "postfix"; then
+    echo "postfix no está instalado. Instalando..."
+    apt install -y "postfix"
+else
+    echo "postfix ya está instalado."
+fi
 
 # Configurar Postfix
 echo "Configurando Postfix..."
@@ -38,11 +48,23 @@ for user in liz alice; do
 done
 
 # Paso 4: Instalar mailx
-apt install -y bsd-mailx
-echo "mailx instalado."
+# apt install -y bsd-mailx
+# echo "mailx instalado."
+if ! is_package_installed "bsd-mailx"; then
+    echo "bsd-mailx no está instalado. Instalando..."
+    apt install -y "bsd-mailx"
+else
+    echo "bsd-mailx ya está instalado."
+fi
 
 # Paso 5: Instalar y Configurar Dovecot
-apt install -y dovecot-pop3d
+# apt install -y dovecot-pop3d
+if ! is_package_installed "dovecot-pop3d"; then
+    echo "dovecot-pop3d no está instalado. Instalando..."
+    apt install -y "dovecot-pop3d"
+else
+    echo "dovecot-pop3d ya está instalado."
+fi
 
 # Configurar autenticación en Dovecot
 sed -i "s/^#\?disable_plaintext_auth = .*/disable_plaintext_auth = no/" /etc/dovecot/conf.d/10-auth.conf
@@ -56,7 +78,22 @@ systemctl restart dovecot
 echo "Dovecot configurado y reiniciado."
 
 # Instalar mysql-server y dovecot-imapd
-apt install -y mysql-server dovecot-imapd
+# apt install -y mysql-server dovecot-imapd
+
+# Lista de paquetes necesarios
+PACKAGES=(
+    "mysql-server"
+    "dovecot-imapd" 
+)
+
+for PACKAGE in "${PACKAGES[@]}"; do
+    if ! is_package_installed "$PACKAGE"; then
+        echo "$PACKAGE no está instalado. Instalando..."
+        apt install -y "$PACKAGE"
+    else
+        echo "$PACKAGE ya está instalado."
+    fi
+done
 
 # Finalización
 echo "\nServidor de correo configurado exitosamente."
