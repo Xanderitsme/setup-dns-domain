@@ -7,6 +7,9 @@ if [ ! -f "$CONFIG_FILE" ]; then
   exit 1
 fi
 
+# Cargar variables desde el archivo de configuración
+source "$CONFIG_FILE"
+
 # Función para comprobar si un paquete está instalado
 is_package_installed() {
     dpkg -l | grep -q "^ii  $1 "  # Busca el paquete en la lista de paquetes instalados
