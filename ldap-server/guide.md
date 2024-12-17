@@ -95,3 +95,65 @@ $servers->setValue('server','host','[ip]');
 
 $servers->setValue('server','base',array('dc=[base-domain],dc=com'));
 ```
+
+luego
+
+```bash
+sudo apt install libnss-ldap libpam-ldap -y
+```
+
+se debe completar los datos solicitados de la siguiente manera:
+
+  - ldap server uniform resource identifier: `ldap://[ip]`
+  - distinguished name of the search base: `dc=[base-domain],dc=com`
+  - ldap version to use: `3` o la más alta que haya
+  - make local root database admin: `yes`
+  - Does the LDAP database require login?: `no`
+  - ldap account for root: `cn=admin,dc=[base-domain],dc=com`
+  - ldap root account password: `[enter your password]`
+
+> **Opcional**: Puedes verificar el funcionamiento del servidor intentando acceder a ldap a través de la interfaz web, la puedes encontrar en: `http://[ip]/phpldapadmin`, puedes probar a iniciar sesión con las credenciales usuario: `cn=admin,dc=[base-domain],dc=com`, password: `[your password]`, luego puedes probar a crear grupos o usuarios
+
+acceder al archivo
+
+```bash
+sudo nano /usr/share/pam-configs/mkhomedir
+```
+
+modificar el archivo de esta forma:
+```bash
+Name: Create home directory on login
+Default: yes
+Priority: 900
+Session-Type: Additional
+Session:
+        required                        pam_mkhomedir.so umask=0022 skel=/etc/skel
+```
+
+```bash
+sudo pam-auth-update
+```
+
+en la configuración que te aparece debes marcar todas excepto la autenticación biométrica
+
+luego debes modificar este archivo
+
+```bash
+sudo nano /etc/pam.d/common-account
+```
+
+agregar la siguiente linea en caso de que no se encuentre:
+```bash
+account required pam_unix.so
+```
+
+modificar este otro archivo
+
+```bash
+sudo nano /etc/pam.d/common-session
+```
+
+agregar la siguiente linea en caso de que no se encuentre:
+```bash
+session require pam_limits.so
+```
