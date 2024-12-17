@@ -137,12 +137,12 @@ for DOMAIN_ENTRY in "${DOMAINS[@]}"; do
                 IN      NS      $SUBDOMAIN.$DOMAIN.
 $DOMAIN.        IN      MX      10 correo.$DOMAIN.
 
-$SUBDOMAIN              A       $IP
+$SUBDOMAIN      IN      A       $IP
 
 server          IN      CNAME   $SUBDOMAIN
 pop3            IN      CNAME   $SUBDOMAIN
 smtp            IN      CNAME   $SUBDOMAIN
-correo            IN      CNAME   $SUBDOMAIN
+correo          IN      CNAME   $SUBDOMAIN
 EOL
 done
 

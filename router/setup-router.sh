@@ -29,8 +29,17 @@ fi
 # Cargar variables desde el archivo de configuración
 source "$CONFIG_FILE"
 
-# Configurar Netplan
+# Almacenar el valor actual de "renderer" en el archivo de Netplan
+current_renderer=$(grep -E '^\s*renderer:' "$NETPLAN_FILE" | awk '{print $2}')
+
+# Si no se encuentra "renderer" en el archivo, establecerlo a "NetworkManager" por defecto
+if [ -z "$current_renderer" ]; then
+  current_renderer="NetworkManager"
+fi
+
+# Configurar Netplan sin sobrescribir el valor de "renderer"
 echo "Configurando Netplan..."
+
 cat <<EOF > $NETPLAN_FILE
 network:
   version: 2
@@ -41,7 +50,7 @@ network:
       addresses: [$LAN_NETWORK]
       nameservers:
         addresses: [$DNS_SERVERS]
-  renderer: networkd
+  renderer: $current_renderer
 EOF
 
 # Aplicar configuración de Netplan
