@@ -1,126 +1,122 @@
-# Guía para Configurar un Servidor ldap
+# Guía para Configurar un Servidor LDAP en Ubuntu
 
-instalar paquetes
+Este tutorial te guiará paso a paso para configurar un servidor LDAP en Ubuntu, incluyendo la instalación de herramientas necesarias, configuración del servidor y ajustes adicionales.
+
+## 1. **Instalar los Paquetes Necesarios**
+
+Primero, instalamos los paquetes esenciales para LDAP:
+
 ```bash
-sudo apt install slapd ldap-utils -y
+sudo apt update
+sudo apt install slapd ldap-utils phpldapadmin libnss-ldap libpam-ldap -y
 ```
 
-ingresa una nueva contraseña para el servidor ldap y luego confirma la contraseña
+## 2. **Configurar el Servidor LDAP**
 
-realizar la configuración inicial
+### 2.1 **Configuración Inicial de `slapd`**
+
+Después de la instalación, configura el servidor LDAP con el siguiente comando:
+
 ```bash
 sudo dpkg-reconfigure slapd
 ```
 
-completa los campos de la siguiente manera (reemplaza [dominio] con tu dominio por ejemplo `misitio.com` [base-dominio] ejemplo `misitio`):
+Completa los siguientes campos según tu configuración (reemplaza `[dominio]` y `[base-dominio]` con tu propio dominio y nombre de organización):
 
-  - Omitir configuración ldap: `no`
-  - Nombre de dominio: `[dominio]`
-  - Nombre de la organización: `[base-dominio]`
-  - contraseña servidor ldap: `crea tu propia contraseña`
-  - confirmar contraseña: `vuelve a introducir tu contraseña`
-  - remover base de datos: `no`
-  - mover base de datos antigua: `yes`
+- **Omitir configuración LDAP:** No
+- **Nombre de dominio:** `[dominio]` (ej. `misitio.com`)
+- **Nombre de la organización:** `[base-dominio]` (ej. `misitio`)
+- **Contraseña del servidor LDAP:** Elige y confirma una contraseña segura para el administrador LDAP.
+- **Remover base de datos:** No
+- **Mover base de datos antigua:** Sí
+
+## 3. **Configurar Archivos de Configuración LDAP**
+
+### 3.1 **Configurar `/etc/ldap/ldap.conf`**
+
+Edita el archivo de configuración principal de LDAP:
 
 ```bash
 sudo nano /etc/ldap/ldap.conf
 ```
 
-modifica el archivo de esta forma (reemplaza `[base-domain]` y `[ip]` con los valores correspondientes, `[ip]` es la ip del servidor actual lo puedes obtener al ejecutar `hostname -I`)
+Modifica las siguientes líneas (reemplaza `[base-domain]` con tu dominio y `[ip]` con la IP de tu servidor):
 
 ```bash
-#
-# LDAP Defaults
-#
-
-# See ldap.conf(5) for details
-# This file should be world readable but not world writable.
-
 BASE   dc=[base-domain],dc=com
 URI    ldap://[ip]:389
-
-#SIZELIMIT      12
-#TIMELIMIT      15
-#DEREF          never
-
-# TLS certificates (needed for GnuTLS)
 TLS_CACERT      /etc/ssl/certs/ca-certificates.crt
 ```
+
+### 3.2 **Configurar `/etc/nsswitch.conf`**
+
+Este archivo define cómo se resuelven las consultas de nombre, como usuarios, grupos y contraseñas. Edita el archivo:
 
 ```bash
 sudo nano /etc/nsswitch.conf
 ```
 
-realiza los siguientes cambios
+Asegúrate de que las siguientes líneas se vean como sigue:
 
 ```bash
-# /etc/nsswitch.conf
-#
-# Example configuration of GNU Name Service Switch functionality.
-# If you have the `glibc-doc-reference' and `info' packages installed, try:
-# `info libc "Name Service Switch"' for information about this file.
-
 passwd:         files ldap
 group:          files ldap
 shadow:         files ldap
 gshadow:        files
-
 hosts:          files dns
 networks:       files
-
 protocols:      db files
 services:       db files
 ethers:         db files
 rpc:            db files
-
 netgroup:       nis
 ```
 
-instalar phpldapadmin
+## 4. **Configurar PHP LDAP Admin (Opcional)**
 
-```bash
-sudo apt install phpldapadmin -y
-```
+### 4.1 **Configurar `phpldapadmin`**
+
+Edita la configuración de `phpldapadmin` para que se conecte a tu servidor LDAP:
 
 ```bash
 sudo nano /etc/phpldapadmin/config.php
 ```
 
-busca estos valores y cambialos
+Busca las siguientes líneas y cámbialas con los valores adecuados:
 
-```bash
-$servers->setValue('server','name','[nombre de la organizacion]');
-
+```php
+$servers->setValue('server','name','[nombre de la organización]');
 $servers->setValue('server','host','[ip]');
-
 $servers->setValue('server','base',array('dc=[base-domain],dc=com'));
 ```
 
-luego
+### 4.2 **Verificación a Través de la Web (Opcional)**
 
-```bash
-sudo apt install libnss-ldap libpam-ldap -y
+Puedes verificar el acceso a LDAP a través de la interfaz web de `phpldapadmin` en:
+
+```
+http://[ip]/phpldapadmin
 ```
 
-se debe completar los datos solicitados de la siguiente manera:
+Inicia sesión con las siguientes credenciales:
 
-  - ldap server uniform resource identifier: `ldap://[ip]`
-  - distinguished name of the search base: `dc=[base-domain],dc=com`
-  - ldap version to use: `3` o la más alta que haya
-  - make local root database admin: `yes`
-  - Does the LDAP database require login?: `no`
-  - ldap account for root: `cn=admin,dc=[base-domain],dc=com`
-  - ldap root account password: `[enter your password]`
+- **Usuario:** `cn=admin,dc=[base-domain],dc=com`
+- **Contraseña:** La contraseña que configuraste previamente.
 
-> **Opcional**: Puedes verificar el funcionamiento del servidor intentando acceder a ldap a través de la interfaz web, la puedes encontrar en: `http://[ip]/phpldapadmin`, puedes probar a iniciar sesión con las credenciales usuario: `cn=admin,dc=[base-domain],dc=com`, password: `[your password]`, luego puedes probar a crear grupos o usuarios
+Intenta crear grupos o usuarios para verificar que todo esté funcionando.
 
-acceder al archivo
+## 5. **Configurar Autenticación y Creación de Directorios de Inicio (Home Directories)**
+
+### 5.1 **Configurar `mkhomedir` para Crear Directorios de Inicio Automáticamente**
+
+Edita el archivo de configuración de PAM para crear directorios de inicio al iniciar sesión:
 
 ```bash
 sudo nano /usr/share/pam-configs/mkhomedir
 ```
 
-modificar el archivo de esta forma:
+Modifica el archivo para que se vea así:
+
 ```bash
 Name: Create home directory on login
 Default: yes
@@ -130,30 +126,50 @@ Session:
         required                        pam_mkhomedir.so umask=0022 skel=/etc/skel
 ```
 
+### 5.2 **Actualizar la Configuración de PAM**
+
+Ejecuta el siguiente comando para aplicar la configuración:
+
 ```bash
 sudo pam-auth-update
 ```
 
-en la configuración que te aparece debes marcar todas excepto la autenticación biométrica
+En la interfaz que aparece, selecciona todas las opciones excepto "Autenticación biométrica".
 
-luego debes modificar este archivo
+### 5.3 **Ajustes en Archivos de PAM**
+
+Asegúrate de que los siguientes archivos tengan las configuraciones correctas.
+
+- Edita `/etc/pam.d/common-account`:
 
 ```bash
 sudo nano /etc/pam.d/common-account
 ```
 
-agregar la siguiente linea en caso de que no se encuentre:
+Asegúrate de que contenga la siguiente línea (agregarla si no está):
+
 ```bash
 account required pam_unix.so
 ```
 
-modificar este otro archivo
+- Edita `/etc/pam.d/common-session`:
 
 ```bash
 sudo nano /etc/pam.d/common-session
 ```
 
-agregar la siguiente linea en caso de que no se encuentre:
+Agrega la siguiente línea si no está:
+
 ```bash
-session require pam_limits.so
+session required pam_limits.so
+```
+
+## 6. **Comprobar el Funcionamiento**
+
+Una vez que hayas completado todos estos pasos, el servidor LDAP debe estar funcionando correctamente. Puedes comprobarlo con el comando `ldapsearch` para verificar que la base de datos LDAP responde correctamente.
+
+Ejemplo de búsqueda de usuarios:
+
+```bash
+ldapsearch -x -b "dc=[base-domain],dc=com" "(objectClass=inetOrgPerson)"
 ```
