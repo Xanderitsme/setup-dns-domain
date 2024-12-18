@@ -1,0 +1,5 @@
+LDAP_DOMAIN="empresa.com"
+LDAP_BASE_DOMAIN="empresa"
+LDAP_ADMIN_PASSWORD="adminpassword"
+SERVER_IP="127.0.0.1"
+PHPLDAPADMIN_ORG="empresa"
